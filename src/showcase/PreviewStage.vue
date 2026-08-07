@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { Code2 } from 'lucide-vue-next'
 import type { LibGroupMeta } from '../lib'
 import { rotatePreviewKey } from './composables/previewKey'
 
@@ -8,6 +9,8 @@ const props = defineProps<{
   component: LibGroupMeta['components'][number]['component']
   index?: number
 }>()
+
+const emit = defineEmits<{ goCode: [] }>()
 
 type Width = 'desktop' | 'tablet' | 'mobile'
 const width = ref<Width>('desktop')
@@ -22,20 +25,26 @@ watch(rotatePreviewKey, () => {
 </script>
 
 <template>
-  <div class="stage">
+  <div id="preview-stage" class="stage">
     <div class="stage-head">
       <span class="kicker">
         {{ padNum(index) }} — LIVE · {{ group.name }} · {{ group.en }}
       </span>
-      <div class="widths mono">
-        <button
-          v-for="w in (['desktop', 'tablet', 'mobile'] as Width[])"
-          :key="w"
-          class="wbtn"
-          :class="{ active: width === w }"
-          @click="width = w"
-        >
-          {{ w === 'desktop' ? 'DESK' : w === 'tablet' ? 'TAB' : 'MOB' }}
+      <div class="head-right">
+        <div class="widths mono">
+          <button
+            v-for="w in (['desktop', 'tablet', 'mobile'] as Width[])"
+            :key="w"
+            class="wbtn"
+            :class="{ active: width === w }"
+            @click="width = w"
+          >
+            {{ w === 'desktop' ? 'DESK' : w === 'tablet' ? 'TAB' : 'MOB' }}
+          </button>
+        </div>
+        <button class="goto mono" @click="emit('goCode')">
+          <Code2 :size="12" />
+          查看代码
         </button>
       </div>
     </div>
@@ -70,6 +79,28 @@ watch(rotatePreviewKey, () => {
 .widths {
   display: flex;
   gap: 2px;
+}
+.head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.goto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  transition: all 0.18s ease;
+}
+.goto:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-3);
 }
 .wbtn {
   font-size: 9.5px;

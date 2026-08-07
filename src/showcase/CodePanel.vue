@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { FileCode2, Download } from 'lucide-vue-next'
+import { Eye, FileCode2, Download } from 'lucide-vue-next'
 import { highlightSfc } from './highlight'
 import { copyText } from './composables/useClipboard'
 import { pushToast } from './composables/useToast'
@@ -12,6 +12,8 @@ const props = defineProps<{
   en: string
   raw: string
 }>()
+
+const emit = defineEmits<{ goPreview: [] }>()
 
 const langMap: Record<string, string> = {
   template: 'TEMPLATE',
@@ -76,7 +78,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="code-panel">
+  <div id="code-panel" class="code-panel">
     <div class="code-head">
       <div class="tabs">
         <button
@@ -90,6 +92,10 @@ onMounted(() => {
         </button>
       </div>
       <div class="actions">
+        <button class="action mono back" @click="emit('goPreview')">
+          <Eye :size="13" />
+          返回预览
+        </button>
         <CopyBtn :text="tabs[activeTab]?.raw || ''" label="复制本段" />
         <button class="action mono" @click="copyAll">
           <FileCode2 :size="13" />
@@ -175,6 +181,15 @@ onMounted(() => {
 .action:hover {
   color: var(--ink);
   border-color: var(--line-strong);
+}
+.action.back {
+  border-color: transparent;
+  background: none;
+  color: var(--ink-3);
+}
+.action.back:hover {
+  color: var(--ink);
+  border-color: var(--line);
 }
 .code-scroll {
   max-height: 520px;

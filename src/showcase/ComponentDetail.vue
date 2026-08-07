@@ -28,6 +28,10 @@ const siblings = computed(() => {
   const idx = list.findIndex((c) => c.id === props.id)
   return { prev: list[idx - 1], next: list[idx + 1] }
 })
+
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 </script>
 
 <template>
@@ -61,9 +65,9 @@ const siblings = computed(() => {
       </div>
     </div>
 
-    <PreviewStage :group="group" :component="item.component" :index="itemIdx" />
+    <PreviewStage :group="group" :component="item.component" :index="itemIdx" @go-code="scrollTo('code-panel')" />
 
-    <CodePanel :id="item.id" :name="item.name" :en="item.en" :raw="item.raw" />
+    <CodePanel :id="item.id" :name="item.name" :en="item.en" :raw="item.raw" @go-preview="scrollTo('preview-stage')" />
 
     <div class="pager">
       <button v-if="siblings.prev" class="pager-btn" @click="navigate({ name: 'component', id: siblings.prev!.id })">
