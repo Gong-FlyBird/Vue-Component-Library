@@ -14,8 +14,8 @@ function iconFor(type?: string) {
     <div class="toast-host">
       <TransitionGroup name="toast">
         <div v-for="t in toasts" :key="t.id" class="toast" :class="t.type || 'success'">
-          <component :is="iconFor(t.type)" :size="15" class="toast-icon" />
-          <span>{{ t.message }}</span>
+          <component :is="iconFor(t.type)" :size="13" class="toast-icon" />
+          <span class="mono">{{ t.message }}</span>
         </div>
       </TransitionGroup>
     </div>
@@ -36,26 +36,21 @@ function iconFor(type?: string) {
 .toast {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   padding: 10px 16px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-lg);
-  font-size: 13px;
-  color: var(--text);
-  backdrop-filter: blur(12px);
-  max-width: 320px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  box-shadow: var(--shadow);
 }
 .toast-icon {
   flex-shrink: 0;
-  color: #34c759;
+  color: var(--accent);
 }
 .toast.warn .toast-icon {
-  color: #ff9f0a;
-}
-.toast.info .toast-icon {
-  color: #0a84ff;
+  color: #e8a33d;
 }
 .toast-enter-active,
 .toast-leave-active {
@@ -63,10 +58,10 @@ function iconFor(type?: string) {
 }
 .toast-enter-from {
   opacity: 0;
-  transform: translateY(12px) scale(0.96);
+  transform: translateY(10px);
 }
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(24px);
+  transform: translateX(20px);
 }
 </style>

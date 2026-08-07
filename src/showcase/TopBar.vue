@@ -2,6 +2,7 @@
 import { Moon, Sun } from 'lucide-vue-next'
 import { theme, toggleTheme } from './composables/useTheme'
 import { navigate } from './router'
+import { totalCount } from '../lib'
 
 defineProps<{ onMenu: () => void }>()
 </script>
@@ -11,19 +12,21 @@ defineProps<{ onMenu: () => void }>()
     <button class="menu-btn" aria-label="菜单" @click="onMenu">
       <span />
       <span />
-      <span />
     </button>
 
     <button class="brand" @click="navigate({ name: 'home' })">
-      <span class="brand-mark">A</span>
-      <span class="brand-name">Atelier UI</span>
+      <span class="brand-cn">高级审美组件档案馆</span>
+      <span class="brand-en">ATELIER UI — COMPONENT ARCHIVE</span>
     </button>
 
     <div class="spacer" />
 
+    <span class="total mono">{{ String(totalCount).padStart(2, '0') }} 组件</span>
+
     <button class="theme-btn" :title="theme === 'dark' ? '切换到亮色' : '切换到暗色'" @click="toggleTheme">
-      <Sun v-if="theme === 'dark'" :size="16" />
-      <Moon v-else :size="16" />
+      <span class="theme-label mono">{{ theme === 'dark' ? 'LIGHT' : 'DARK' }}</span>
+      <Moon v-if="theme === 'dark'" :size="14" />
+      <Sun v-else :size="14" />
     </button>
   </header>
 </template>
@@ -35,70 +38,79 @@ defineProps<{ onMenu: () => void }>()
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 56px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  gap: 14px;
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 .brand {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  text-align: left;
 }
-.brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: var(--grad-brand);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 15px;
-  font-weight: 800;
+.brand-cn {
   font-family: var(--serif);
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.brand-en {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
 }
 .spacer {
   flex: 1;
 }
+.total {
+  font-size: 11px;
+  color: var(--ink-2);
+  border-left: 1px solid var(--line);
+  padding-left: 14px;
+}
 .theme-btn {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  background: transparent;
   transition: all 0.2s ease;
 }
 .theme-btn:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
-  transform: rotate(12deg);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.theme-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
 }
 .menu-btn {
   display: none;
   flex-direction: column;
   gap: 4px;
   padding: 8px;
-  border-radius: 8px;
 }
 .menu-btn span {
   width: 16px;
-  height: 2px;
-  background: var(--text-2);
-  border-radius: 2px;
+  height: 1.5px;
+  background: var(--ink-2);
 }
 @media (max-width: 860px) {
   .menu-btn {
     display: flex;
+  }
+  .total {
+    display: none;
   }
 }
 </style>

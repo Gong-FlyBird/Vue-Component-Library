@@ -13,7 +13,6 @@ const showFavs = ref(false)
 const searchInput = ref<HTMLInputElement>()
 
 const normalized = computed(() => query.value.trim().toLowerCase())
-
 const searchActive = computed(() => !!normalized.value || !!tagFilter.value || showFavs.value)
 
 const matches = computed(() => {
@@ -29,11 +28,6 @@ const matches = computed(() => {
   })
 })
 
-const visibleGroups = computed(() => {
-  if (searchActive.value) return []
-  return groups.map((g) => ({ ...g, count: g.components.length }))
-})
-
 function open(id: string) {
   navigate({ name: 'component', id })
   rotatePreview()
@@ -41,8 +35,7 @@ function open(id: string) {
 
 function random() {
   const pool = matches.value.length ? matches.value : allComponents
-  const pick = pool[Math.floor(Math.random() * pool.length)]
-  open(pick.id)
+  open(pool[Math.floor(Math.random() * pool.length)].id)
 }
 
 function toggleFavs() {
@@ -54,31 +47,47 @@ function toggleFavs() {
 defineExpose({
   focusSearch: () => searchInput.value?.focus(),
 })
+
+const pad = (n: number) => String(n + 1).padStart(2, '0')
 </script>
 
 <template>
   <aside class="sidebar">
     <div class="search-wrap">
-      <Search :size="15" class="search-icon" />
       <input
         ref="searchInput"
         v-model="query"
-        class="search"
+        class="search mono"
         type="text"
-        placeholder="搜索组件…  ( Ctrl K )"
+        placeholder="搜索组件…"
         spellcheck="false"
       />
       <button v-if="query" class="clear" @click="query = ''">
         <X :size="13" />
       </button>
-      <kbd v-else class="kbd">⌘K</kbd>
+      <Search v-else :size="13" class="search-icon" />
     </div>
 
-    <div class="chip-row">
+    <div class="filters">
+      <button
+        class="filter mono"
+        :class="{ active: showFavs }"
+        @click="toggleFavs"
+      >
+        <Heart :size="12" :fill="showFavs ? 'currentColor' : 'none'" />
+        收藏{{ favorites.size ? ` (${favorites.size})` : '' }}
+      </button>
+      <button class="filter mono" @click="random">
+        <Dices :size="12" />
+        随机
+      </button>
+    </div>
+
+    <div class="tag-row">
       <button
         v-for="t in ALL_TAGS"
         :key="t"
-        class="chip"
+        class="tag mono"
         :class="{ active: tagFilter === t }"
         @click="tagFilter = tagFilter === t ? '' : t"
       >
@@ -86,47 +95,39 @@ defineExpose({
       </button>
     </div>
 
-    <div class="side-actions">
-      <button class="side-btn" :class="{ active: showFavs }" @click="toggleFavs">
-        <Heart :size="14" :fill="showFavs ? 'currentColor' : 'none'" />
-        收藏
-        <span v-if="favorites.size" class="fav-count">{{ favorites.size }}</span>
-      </button>
-      <button class="side-btn" @click="random">
-        <Dices :size="14" />
-        随机逛逛
-      </button>
+    <div class="index-head">
+      <span class="kicker">目录</span>
+      <span class="kicker mono">{{ matches.length }} 项</span>
     </div>
 
     <nav class="nav">
       <template v-if="searchActive">
-        <div class="nav-hint">{{ matches.length }} 个结果</div>
         <button
-          v-for="c in matches"
+          v-for="(c, i) in matches"
           :key="c.id"
-          class="item"
+          class="row"
           :class="{ active: route.name === 'component' && route.id === c.id }"
           @click="open(c.id)"
         >
-          <span class="item-dot" :style="{ background: 'var(--grad-brand)' }" />
-          <span class="item-name">{{ c.name }}</span>
-          <small class="item-group">{{ c.groupName }}</small>
+          <span class="no mono">{{ pad(i) }}</span>
+          <span class="name">{{ c.name }}</span>
+          <span class="meta mono">{{ c.groupName }}</span>
         </button>
-        <p v-if="!matches.length" class="empty">没有匹配的组件，换个关键词试试。</p>
+        <p v-if="!matches.length" class="empty">没有匹配的组件。</p>
       </template>
 
       <template v-else>
         <button
-          v-for="g in visibleGroups"
+          v-for="(g, i) in groups"
           :key="g.id"
-          class="group-item"
-          :class="{ open: route.name === 'component' && route.id.startsWith(g.id + '-') }"
+          class="row"
+          :class="{ active: route.name === 'component' && route.id.startsWith(g.id + '-') }"
           @click="open(g.components[0].id)"
         >
-          <span class="group-dot" :style="{ background: g.gradient }" />
-          <span class="group-name">{{ g.name }}</span>
-          <small class="group-en">{{ g.en }}</small>
-          <span class="group-count">{{ g.count }}</span>
+          <span class="no mono">{{ pad(i) }}</span>
+          <span class="name">{{ g.name }}</span>
+          <span class="meta mono">{{ g.en }}</span>
+          <span class="count mono">{{ g.components.length }}</span>
         </button>
       </template>
     </nav>
@@ -137,201 +138,166 @@ defineExpose({
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 14px;
+  gap: 14px;
+  padding: 18px 14px;
   overflow-y: auto;
   height: 100%;
 }
 .search-wrap {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 12px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 2px;
+  transition: border-color 0.2s ease;
 }
 .search-wrap:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
-}
-.search-icon {
-  color: var(--text-3);
-  flex-shrink: 0;
+  border-bottom-color: var(--ink);
 }
 .search {
   flex: 1;
   border: none;
   outline: none;
   background: transparent;
-  color: var(--text);
-  font-size: 13px;
+  color: var(--ink);
+  font-size: 12.5px;
 }
 .search::placeholder {
-  color: var(--text-3);
+  color: var(--ink-3);
 }
+.search-icon,
 .clear {
-  color: var(--text-3);
+  color: var(--ink-3);
+  flex-shrink: 0;
   display: flex;
-  padding: 2px;
 }
 .clear:hover {
-  color: var(--text);
+  color: var(--ink);
 }
-.chip-row {
+.filters {
+  display: flex;
+  gap: 6px;
+}
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  background: transparent;
+  transition: all 0.18s ease;
+}
+.filter:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.filter.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
-.chip {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  background: var(--surface);
+.tag {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
   transition: all 0.15s ease;
 }
-.chip:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
+.tag:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
 }
-.chip.active {
-  background: var(--grad-brand);
-  color: #fff;
-  border-color: transparent;
+.tag.active {
+  color: var(--bg);
+  background: var(--ink);
+  border-color: var(--ink);
 }
-.side-actions {
+.index-head {
   display: flex;
-  gap: 6px;
-}
-.side-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  transition: all 0.18s ease;
-}
-.side-btn:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-.side-btn.active {
-  color: #ff4d6d;
-  border-color: rgba(255, 77, 109, 0.4);
-}
-.fav-count {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(255, 77, 109, 0.15);
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 2px 4px;
+  border-bottom: 1px solid var(--line-strong);
 }
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   overflow-y: auto;
 }
-.nav-hint {
-  font-size: 11px;
-  color: var(--text-3);
-  padding: 6px 8px;
-  letter-spacing: 0.5px;
-}
-.item {
+.row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 9px;
-  font-size: 12.5px;
-  color: var(--text-2);
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--line);
   text-align: left;
   transition: all 0.15s ease;
+  position: relative;
 }
-.item:hover {
+.row:last-child {
+  border-bottom: none;
+}
+.row:hover {
   background: var(--surface);
-  color: var(--text);
 }
-.item.active {
-  background: var(--surface-2);
-  color: var(--text);
+.row.active {
+  background: var(--surface);
 }
-.item-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.row.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--accent);
+}
+.no {
+  font-size: 10px;
+  color: var(--ink-3);
+  width: 20px;
   flex-shrink: 0;
 }
-.item-name {
+.row:hover .no {
+  color: var(--accent);
+}
+.name {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   flex: 1;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.meta {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
   white-space: nowrap;
-}
-.item-group {
-  font-size: 10px;
-  color: var(--text-3);
-  flex-shrink: 0;
-}
-.group-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  color: var(--text-2);
-  text-align: left;
-  transition: all 0.15s ease;
-}
-.group-item:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-.group-item.open {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.group-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-.group-name {
-  font-size: 13px;
-  font-weight: 500;
-}
-.group-en {
-  flex: 1;
-  font-size: 10px;
-  color: var(--text-3);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 92px;
 }
-.group-count {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--text-3);
-  background: var(--surface-2);
-  padding: 1px 7px;
-  border-radius: 999px;
+.count {
+  font-size: 10px;
+  color: var(--ink-3);
 }
 .empty {
-  font-size: 12.5px;
-  color: var(--text-3);
-  padding: 18px 10px;
-  text-align: center;
-  line-height: 1.7;
+  font-size: 12px;
+  color: var(--ink-3);
+  padding: 24px 4px;
 }
 </style>

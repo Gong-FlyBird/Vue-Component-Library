@@ -50,8 +50,10 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="sidebarOpen" class="scrim" @click="sidebarOpen = false" />
       <main class="main">
-        <HomeView v-if="route.name === 'home'" />
-        <ComponentDetail v-else-if="route.name === 'component'" :id="route.id" />
+        <Transition name="page" mode="out-in">
+          <HomeView v-if="route.name === 'home'" :key="'home'" />
+          <ComponentDetail v-else-if="route.name === 'component'" :id="route.id" :key="route.id" />
+        </Transition>
       </main>
     </div>
     <ToastHost />
@@ -72,27 +74,40 @@ onBeforeUnmount(() => {
 .sidebar-wrap {
   width: 264px;
   flex-shrink: 0;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--line);
   background: var(--bg-2);
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .main {
   flex: 1;
   min-width: 0;
-  padding: 22px 24px 0;
+  padding: 26px 40px 0;
 }
 .scrim {
   display: none;
 }
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 @media (max-width: 860px) {
   .sidebar-wrap {
     position: fixed;
-    top: 56px;
+    top: 52px;
     bottom: 0;
     left: 0;
     z-index: 90;
     transform: translateX(-102%);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow);
   }
   .sidebar-open .sidebar-wrap {
     transform: translateX(0);
@@ -100,13 +115,12 @@ onBeforeUnmount(() => {
   .scrim {
     display: block;
     position: fixed;
-    inset: 56px 0 0 0;
-    background: rgba(0, 0, 0, 0.45);
+    inset: 52px 0 0 0;
+    background: rgba(0, 0, 0, 0.4);
     z-index: 80;
-    backdrop-filter: blur(2px);
   }
   .main {
-    padding: 16px 14px 0;
+    padding: 18px 16px 0;
   }
 }
 </style>

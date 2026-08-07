@@ -9,9 +9,8 @@ const props = withDefaults(
     text: string
     label?: string
     size?: number
-    iconOnly?: boolean
   }>(),
-  { label: '复制', size: 15, iconOnly: false },
+  { label: '复制', size: 13 },
 )
 
 const done = ref(false)
@@ -31,10 +30,10 @@ async function onCopy() {
 </script>
 
 <template>
-  <button class="copy-btn" :class="{ 'icon-only': iconOnly }" @click="onCopy">
+  <button class="copy-btn mono" @click="onCopy">
     <Check v-if="done" :size="size" class="done-icon" />
     <Copy v-else :size="size" />
-    <span v-if="!iconOnly">{{ done ? '已复制' : label }}</span>
+    <span>{{ done ? '已复制' : label }}</span>
   </button>
 </template>
 
@@ -43,27 +42,23 @@ async function onCopy() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-2);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: transparent;
   transition: all 0.18s ease;
 }
 .copy-btn:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
-  background: var(--surface-3);
+  background: var(--ink);
+  color: var(--bg);
 }
 .copy-btn:active {
-  transform: scale(0.95);
-}
-.copy-btn.icon-only {
-  padding: 6px;
-  border-radius: 8px;
+  transform: scale(0.97);
 }
 .done-icon {
-  color: #34c759;
+  color: var(--accent);
 }
 </style>

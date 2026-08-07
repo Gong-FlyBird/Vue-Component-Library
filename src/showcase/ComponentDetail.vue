@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronLeft, ChevronRight, Heart } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, Heart } from 'lucide-vue-next'
 import { groups, componentMap } from '../lib'
 import PreviewStage from './PreviewStage.vue'
 import CodePanel from './CodePanel.vue'
@@ -13,6 +13,8 @@ const props = defineProps<{ id: string }>()
 
 const item = computed(() => componentMap.get(props.id))
 const group = computed(() => groups.find((g) => g.id === item.value?.groupId))
+const groupIdx = computed(() => groups.findIndex((g) => g.id === group.value?.id))
+const itemIdx = computed(() => group.value?.components.findIndex((c) => c.id === props.id) ?? 0)
 
 const isFav = computed(() => favorites.value.has(props.id))
 
@@ -24,73 +26,65 @@ function fav() {
 const siblings = computed(() => {
   const list = group.value?.components ?? []
   const idx = list.findIndex((c) => c.id === props.id)
-  return {
-    prev: list[idx - 1],
-    next: list[idx + 1],
-  }
+  return { prev: list[idx - 1], next: list[idx + 1] }
 })
 </script>
 
 <template>
   <div v-if="item && group" class="detail">
     <div class="crumb">
-      <button class="crumb-link" @click="navigate({ name: 'home' })">组件库</button>
-      <span class="sep">/</span>
-      <span class="crumb-group">{{ group.name }}</span>
-      <span class="sep">/</span>
-      <span>{{ item.name }}</span>
+      <button class="back mono" @click="navigate({ name: 'home' })">← 返回目录</button>
+      <span class="crumb-path mono">
+        / {{ group.name }} / {{ item.name }}
+      </span>
     </div>
 
     <div class="head">
-      <div>
-        <h1 class="title">{{ item.name }}</h1>
-        <div class="en">{{ item.en }}</div>
+      <div class="head-main">
+        <p class="kicker">
+          {{ String(groupIdx + 1).padStart(2, '0') }} · {{ group.en }} · {{ item.en }}
+        </p>
+        <h1 class="title serif">{{ item.name }}</h1>
         <p class="desc">{{ item.description }}</p>
-        <div class="tags">
-          <span v-for="t in item.tags" :key="t" class="tag">{{ t }}</span>
-        </div>
       </div>
-      <div class="head-actions">
-        <button class="fav-btn" :class="{ active: isFav }" @click="fav">
-          <Heart :size="16" :fill="isFav ? 'currentColor' : 'none'" />
-          {{ isFav ? '已收藏' : '收藏' }}
-        </button>
-        <CopyBtn :text="item.raw" label="复制源码" :size="16" />
+      <div class="head-side">
+        <div class="tags">
+          <span v-for="t in item.tags" :key="t" class="tag mono">{{ t }}</span>
+        </div>
+        <div class="actions">
+          <button class="action mono" :class="{ active: isFav }" @click="fav">
+            <Heart :size="13" :fill="isFav ? 'currentColor' : 'none'" />
+            {{ isFav ? '已收藏' : '收藏' }}
+          </button>
+          <CopyBtn :text="item.raw" label="复制源码" />
+        </div>
       </div>
     </div>
 
-    <PreviewStage :group="group" :component="item.component" />
+    <PreviewStage :group="group" :component="item.component" :index="itemIdx" />
 
     <CodePanel :id="item.id" :name="item.name" :en="item.en" :raw="item.raw" />
 
     <div class="pager">
-      <button
-        v-if="siblings.prev"
-        class="pager-btn prev"
-        @click="navigate({ name: 'component', id: siblings.prev!.id })"
-      >
-        <ChevronLeft :size="16" />
-        <span>
-          <small>上一个</small>
-          {{ siblings.prev.name }}
+      <button v-if="siblings.prev" class="pager-btn" @click="navigate({ name: 'component', id: siblings.prev!.id })">
+        <ArrowLeft :size="15" />
+        <span class="pager-text">
+          <small class="kicker">上一个</small>
+          <b class="serif">{{ siblings.prev.name }}</b>
         </span>
       </button>
       <span v-else />
-      <button
-        v-if="siblings.next"
-        class="pager-btn next"
-        @click="navigate({ name: 'component', id: siblings.next!.id })"
-      >
-        <span>
-          <small>下一个</small>
-          {{ siblings.next.name }}
+      <button v-if="siblings.next" class="pager-btn next" @click="navigate({ name: 'component', id: siblings.next!.id })">
+        <span class="pager-text">
+          <small class="kicker">下一个</small>
+          <b class="serif">{{ siblings.next.name }}</b>
         </span>
-        <ChevronRight :size="16" />
+        <ArrowRight :size="15" />
       </button>
     </div>
   </div>
   <div v-else class="missing">
-    <p>未找到该组件，返回 <a @click="navigate({ name: 'home' })">组件库首页</a>。</p>
+    <p>未找到该组件，<a class="accent" @click="navigate({ name: 'home' })">返回目录</a>。</p>
   </div>
 </template>
 
@@ -98,134 +92,139 @@ const siblings = computed(() => {
 .detail {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 860px;
+  gap: 22px;
+  max-width: 880px;
   margin: 0 auto;
-  padding-bottom: 40px;
+  padding-bottom: 80px;
 }
 .crumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  color: var(--text-3);
+  gap: 14px;
+  padding: 6px 0 2px;
 }
-.crumb-link {
-  color: var(--text-2);
-  transition: color 0.15s;
+.back {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  transition: all 0.15s ease;
+  padding: 4px 0;
 }
-.crumb-link:hover {
+.back:hover {
   color: var(--accent);
+  transform: translateX(-2px);
 }
-.sep {
-  opacity: 0.5;
-}
-.crumb-group {
-  color: var(--text-2);
+.crumb-path {
+  font-size: 11px;
+  color: var(--ink-3);
 }
 .head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  align-items: flex-end;
+  gap: 32px;
   flex-wrap: wrap;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.head-main {
+  max-width: 520px;
 }
 .title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.en {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-3);
-  margin-top: 4px;
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  margin-top: 10px;
 }
 .desc {
-  margin-top: 10px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-2);
-  max-width: 520px;
+  margin-top: 14px;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--ink-2);
+}
+.head-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
 }
 .tags {
   display: flex;
   gap: 6px;
-  margin-top: 12px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .tag {
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
   padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  color: var(--text-2);
-  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2);
 }
-.head-actions {
+.actions {
   display: flex;
   gap: 8px;
-  align-items: center;
 }
-.fav-btn {
+.action {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-2);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2);
   transition: all 0.18s ease;
 }
-.fav-btn:hover {
-  border-color: #ff4d6d;
-  color: #ff4d6d;
+.action:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
 }
-.fav-btn.active {
-  color: #ff4d6d;
-  border-color: rgba(255, 77, 109, 0.4);
-  background: rgba(255, 77, 109, 0.08);
+.action.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 .pager {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
 }
 .pager-btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 13px;
+  gap: 12px;
+  padding: 10px 4px;
+  color: var(--ink-2);
   transition: all 0.2s ease;
 }
 .pager-btn:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-  transform: translateY(-1px);
-}
-.pager-btn small {
-  display: block;
-  font-size: 10.5px;
-  color: var(--text-3);
-  margin-bottom: 2px;
+  color: var(--ink);
 }
 .pager-btn.next {
   margin-left: auto;
+  text-align: right;
+}
+.pager-btn b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.pager-btn small {
+  font-size: 9.5px;
 }
 .missing {
-  padding: 60px 0;
+  padding: 80px 0;
   text-align: center;
-  color: var(--text-2);
+  color: var(--ink-2);
 }
 .missing a {
-  color: var(--accent);
   cursor: pointer;
   text-decoration: underline;
 }
