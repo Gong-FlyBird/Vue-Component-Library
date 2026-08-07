@@ -11,6 +11,7 @@ const props = defineProps<{
   name: string
   en: string
   raw: string
+  back?: boolean
 }>()
 
 const emit = defineEmits<{ goPreview: [] }>()
@@ -92,7 +93,7 @@ onMounted(() => {
         </button>
       </div>
       <div class="actions">
-        <button class="action mono back" @click="emit('goPreview')">
+        <button v-if="back !== false" class="action mono back" @click="emit('goPreview')">
           <Eye :size="13" />
           返回预览
         </button>

@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ArrowLeft, ArrowRight, Heart } from 'lucide-vue-next'
 import { groups, componentMap } from '../lib'
 import PreviewStage from './PreviewStage.vue'
 import CodePanel from './CodePanel.vue'
+import CodeModal from './CodeModal.vue'
 import CopyBtn from './CopyBtn.vue'
 import { favorites, toggleFavorite } from './composables/useFavorites'
 import { pushToast } from './composables/useToast'
 import { navigate } from './router'
 
 const props = defineProps<{ id: string }>()
+
+const codeOpen = ref(false)
 
 const item = computed(() => componentMap.get(props.id))
 const group = computed(() => groups.find((g) => g.id === item.value?.groupId))
@@ -65,9 +68,18 @@ function scrollTo(id: string) {
       </div>
     </div>
 
-    <PreviewStage :group="group" :component="item.component" :index="itemIdx" @go-code="scrollTo('code-panel')" />
+    <PreviewStage :group="group" :component="item.component" :index="itemIdx" @go-code="codeOpen = true" />
 
     <CodePanel :id="item.id" :name="item.name" :en="item.en" :raw="item.raw" @go-preview="scrollTo('preview-stage')" />
+
+    <CodeModal
+      v-if="codeOpen"
+      :id="item.id"
+      :name="item.name"
+      :en="item.en"
+      :raw="item.raw"
+      @close="codeOpen = false"
+    />
 
     <div class="pager">
       <button v-if="siblings.prev" class="pager-btn" @click="navigate({ name: 'component', id: siblings.prev!.id })">
