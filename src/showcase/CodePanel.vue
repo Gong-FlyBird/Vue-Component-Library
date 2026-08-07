@@ -202,6 +202,7 @@ pre {
   font-size: 12.5px;
   line-height: 1.75;
   color: var(--ink);
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 </style>
