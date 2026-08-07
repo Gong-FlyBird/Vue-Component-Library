@@ -53,7 +53,8 @@ function splitSfc(src: string): Block[] {
 export function highlightSfc(src: string): string {
   return splitSfc(src)
     .map((b) => {
-      const lang = b.lang === 'vue' ? 'html' : b.lang
+      const lang =
+        b.lang === 'vue' ? 'html' : b.lang === 'script' ? 'javascript' : b.lang === 'style' ? 'css' : b.lang
       const body = hljs.highlight(b.content, { language: lang, ignoreIllegals: true }).value
       return b.pre ? hljs.highlight(b.pre, { language: 'html', ignoreIllegals: true }).value + body : body
     })
