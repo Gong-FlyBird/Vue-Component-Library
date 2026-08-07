@@ -16,7 +16,7 @@ const modalRef = ref<HTMLElement>()
 const pos = reactive({ x: Math.round(window.innerWidth / 2) - 390, y: 96 })
 const size = reactive({ w: 0, h: 0 })
 const dragging = ref(false)
-const resizing = ref(false)
+const resizeDir = ref<Dir | null>(null)
 let startX = 0
 let startY = 0
 let origX = 0
@@ -25,6 +25,8 @@ let startRX = 0
 let startRY = 0
 let origW = 0
 let origH = 0
+
+type Dir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
 function onDown(e: MouseEvent) {
   if ((e.target as HTMLElement).closest('.modal-x')) return
@@ -53,11 +55,11 @@ function onUp() {
   window.removeEventListener('mouseup', onUp)
 }
 
-function onResizeDown(e: MouseEvent) {
+function onResizeDown(e: MouseEvent, dir: Dir) {
   e.stopPropagation()
-  resizing.value = true
   const el = modalRef.value
   if (!el) return
+  resizeDir.value = dir
   startRX = e.clientX
   startRY = e.clientY
   origW = size.w || el.offsetWidth
@@ -67,15 +69,36 @@ function onResizeDown(e: MouseEvent) {
 }
 
 function onResizeMove(e: MouseEvent) {
-  if (!resizing.value) return
-  const maxW = window.innerWidth - pos.x - 8
-  const maxH = window.innerHeight - pos.y - 8
-  size.w = Math.min(Math.max(origW + e.clientX - startRX, 520), maxW)
-  size.h = Math.min(Math.max(origH + e.clientY - startRY, 280), maxH)
+  const dir = resizeDir.value
+  if (!dir) return
+  const dx = e.clientX - startRX
+  const dy = e.clientY - startRY
+  const MIN_W = 520
+  const MIN_H = 280
+  let w = origW
+  let h = origH
+  let x = pos.x
+  let y = pos.y
+  if (dir.includes('e')) {
+    w = Math.min(Math.max(origW + dx, MIN_W), window.innerWidth - x - 8)
+  } else if (dir.includes('w')) {
+    w = Math.min(Math.max(origW - dx, MIN_W), x + origW - 8)
+    x = x + origW - w
+  }
+  if (dir.includes('s')) {
+    h = Math.min(Math.max(origH + dy, MIN_H), window.innerHeight - y - 8)
+  } else if (dir.includes('n')) {
+    h = Math.min(Math.max(origH - dy, MIN_H), y + origH - 8)
+    y = y + origH - h
+  }
+  pos.x = x
+  pos.y = y
+  size.w = w
+  size.h = h
 }
 
 function onResizeUp() {
-  resizing.value = false
+  resizeDir.value = null
   window.removeEventListener('mousemove', onResizeMove)
   window.removeEventListener('mouseup', onResizeUp)
 }
@@ -118,7 +141,8 @@ onBeforeUnmount(() => {
       </button>
     </div>
     <CodePanel :id="id" :name="name" :en="en" :raw="raw" :back="false" />
-    <div class="resize-handle" title="拖动调整大小" @mousedown="onResizeDown"></div>
+    <div v-for="d in (['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as Dir[])" :key="d" class="rz" :class="'rz-' + d" @mousedown="onResizeDown($event, d)"></div>
+    <div class="resize-handle" title="拖动调整大小" @mousedown="onResizeDown($event, 'se')"></div>
   </div>
 </template>
 
@@ -180,7 +204,6 @@ onBeforeUnmount(() => {
   bottom: 0;
   width: 20px;
   height: 20px;
-  cursor: nwse-resize;
   z-index: 5;
   background: linear-gradient(
       135deg,
@@ -197,10 +220,67 @@ onBeforeUnmount(() => {
       transparent 66%
     );
   opacity: 0.45;
-  transition: opacity 0.15s ease;
+  pointer-events: none;
 }
-.resize-handle:hover {
-  opacity: 1;
+.rz {
+  position: absolute;
+  z-index: 6;
+}
+.rz-n {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  cursor: n-resize;
+}
+.rz-s {
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  cursor: s-resize;
+}
+.rz-e {
+  right: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 8px;
+  cursor: e-resize;
+}
+.rz-w {
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 8px;
+  cursor: w-resize;
+}
+.rz-nw {
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+}
+.rz-ne {
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nesw-resize;
+}
+.rz-sw {
+  bottom: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nesw-resize;
+}
+.rz-se {
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
 }
 :deep(.code-panel) {
   border: none;
